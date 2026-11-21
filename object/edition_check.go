@@ -82,6 +82,9 @@ func CheckOrganizationEdition(organization *Organization) error {
 	if !organization.SecurityPolicy.isEmpty() {
 		return edition.Require(edition.Commercial, edition.FeatureSecurityPolicy)
 	}
+	if organization.IsTrusted {
+		return edition.Require(edition.Commercial, edition.FeatureTrustedOrg)
+	}
 	return nil
 }
 
