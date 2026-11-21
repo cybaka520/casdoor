@@ -385,7 +385,7 @@ func (c *ApiController) HandleLoggedIn(application *object.Application, user *ob
 		if !form.AutoSignin && expireInHours > 24 {
 			expireInHours = 24
 		}
-		c.setExpireForSession(expireInHours)
+		c.setExpireForSession(expireInHours, application.EnableSlidingSession)
 	}
 
 	if resp.Status == "ok" {
@@ -885,6 +885,11 @@ func (c *ApiController) Login() {
 				return
 			} else if user == nil {
 				c.answerCodeSigninSignup(application, &authForm)
+				return
+			}
+
+			if !application.IsCodeSigninAllowedForUser(user) {
+				c.ResponseError(c.T("auth:Signing in with a verification code or a magic link is not enabled for your account"))
 				return
 			}
 
@@ -1725,6 +1730,17 @@ func (c *ApiController) GetSamlLogin() {
 	if err != nil {
 		c.ResponseError(err.Error())
 		return
+	}
+
+	// the redirect binding carries the login_hint the application gave Casdoor on to the IdP, which
+	// Microsoft Entra ID and others use to pick or prefill the account
+	if loginHint := c.Ctx.Input.Query("loginHint"); loginHint != "" && method == "GET" {
+		if parsed, err := url.Parse(authURL); err == nil {
+			query := parsed.Query()
+			query.Set("login_hint", loginHint)
+			parsed.RawQuery = query.Encode()
+			authURL = parsed.String()
+		}
 	}
 	c.SetSession(SamlRequestIdSessionKey, requestId)
 	c.ResponseOk(authURL, method)

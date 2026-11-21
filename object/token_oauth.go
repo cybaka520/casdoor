@@ -257,7 +257,7 @@ func GetAuthorizationCodeToken(application *Application, clientSecret string, co
 		}
 	}
 
-	if application.ClientSecret != clientSecret {
+	if !application.IsClientSecretValid(clientSecret) {
 		// when using PKCE, the Client Secret can be empty,
 		// but if it is provided, it must be accurate.
 		if token.CodeChallenge == "" {
@@ -421,7 +421,7 @@ func getUserGrantToken(application *Application, user *User, scope string, host 
 
 // GetClientCredentialsToken handles the Client Credentials Grant flow.
 func GetClientCredentialsToken(application *Application, clientSecret string, scope string, resource string, host string) (*Token, *TokenError, error) {
-	if application.ClientSecret != clientSecret {
+	if !application.IsClientSecretValid(clientSecret) {
 		return nil, &TokenError{
 			Error:            InvalidClient,
 			ErrorDescription: "client_secret is invalid",
@@ -879,7 +879,7 @@ func GetTokenExchangeToken(application *Application, clientSecret string, subjec
 		return getFederatedTokenExchangeToken(application, credential, federatedClaims, audience, scope, host)
 	}
 
-	if application.ClientSecret != clientSecret {
+	if !application.IsClientSecretValid(clientSecret) {
 		return nil, &TokenError{
 			Error:            InvalidClient,
 			ErrorDescription: "client_secret is invalid",

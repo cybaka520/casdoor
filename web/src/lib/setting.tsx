@@ -433,6 +433,14 @@ export const OtherProviderInfo = {
       logo: `${StaticBaseUrl}/img/social_microsoftonline.png`,
       url: "https://learn.microsoft.com/exchange/client-developer/legacy-protocols/how-to-authenticate-an-imap-pop-smtp-application-by-using-oauth",
     },
+    "Microsoft Graph": {
+      logo: `${StaticBaseUrl}/img/social_microsoftonline.png`,
+      url: "https://learn.microsoft.com/graph/api/user-sendmail",
+    },
+    "Gmail": {
+      logo: `${StaticBaseUrl}/img/social_google.png`,
+      url: "https://developers.google.com/workspace/gmail/imap/xoauth2-protocol",
+    },
   },
   Storage: {
     "Local File System": {
@@ -834,6 +842,7 @@ export const GetTranslatedUserItems = () => {
     {name: "Roles", label: i18next.t("general:Roles")},
     {name: "Permissions", label: i18next.t("general:Permissions")},
     {name: "3rd-party logins", label: i18next.t("user:3rd-party logins")},
+    {name: "Sessions", label: i18next.t("general:Sessions")},
     {name: "Properties", label: i18next.t("user:Properties")},
     {name: "Is online", label: i18next.t("user:Is online")},
     {name: "Is admin", label: i18next.t("user:Is admin")},
@@ -1659,6 +1668,8 @@ export function getProviderTypeOptions(category) {
         {id: "Custom HTTP Email", name: "Custom HTTP Email"},
         {id: "Resend", name: "Resend"},
         {id: "Microsoft 365", name: "Microsoft 365"},
+        {id: "Microsoft Graph", name: "Microsoft Graph"},
+        {id: "Gmail", name: "Gmail"},
       ]
     );
   } else if (category === "SMS") {
