@@ -103,7 +103,8 @@ func GetMobileOneClickToken(application *Application, code string, scope string,
 		}, nil
 	}
 
-	return getMobileOneClickTokenByMobile(application, mobile, scope, host, clientIp, lang, application.isAddressGrantSignupEnabled(MobileOneClickGrantType, VerifyTypePhone))
+	// AMLL Hub 的产品决策：一键登录不自动建号，未注册手机号一律拒绝。
+	return getMobileOneClickTokenByMobile(application, mobile, scope, host, clientIp, lang, false)
 }
 
 // GetMobileOneClickH5Token handles the mobile one-click grant of the PNVS H5 SDK: "spToken"
