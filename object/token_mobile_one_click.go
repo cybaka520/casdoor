@@ -103,6 +103,56 @@ func GetMobileOneClickToken(application *Application, code string, scope string,
 		}, nil
 	}
 
+	return getMobileOneClickTokenByMobile(application, MobileOneClickGrantType, mobile, scope, host, clientIp, lang)
+}
+
+// GetMobileOneClickH5Token handles the mobile one-click grant of the PNVS H5 SDK: "spToken"
+// is the token that the H5 SDK returned in the browser
+func GetMobileOneClickH5Token(application *Application, spToken string, scope string, host string, clientIp string, lang string) (*Token, *TokenError, error) {
+	expandedScope, ok := IsScopeValidAndExpand(scope, application)
+	if !ok {
+		return nil, &TokenError{
+			Error:            InvalidScope,
+			ErrorDescription: "the requested scope is invalid or not defined in the application",
+		}, nil
+	}
+	scope = expandedScope
+
+	if spToken == "" {
+		return nil, &TokenError{
+			Error:            InvalidRequest,
+			ErrorDescription: "code is required",
+		}, nil
+	}
+
+	provider, err := getMobileOneClickProvider(application)
+	if err != nil {
+		return nil, nil, err
+	}
+	if provider == nil {
+		return nil, &TokenError{
+			Error:            UnauthorizedClient,
+			ErrorDescription: fmt.Sprintf("the application has no %s provider for mobile one-click login", pnvsProviderType),
+		}, nil
+	}
+
+	client, err := newPnvsSmsClient(provider.ClientId, provider.ClientSecret, provider.SignName, provider.TemplateCode, provider.RegionId)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	mobile, err := client.GetPhoneWithToken(spToken)
+	if err != nil {
+		return nil, &TokenError{
+			Error:            InvalidGrant,
+			ErrorDescription: err.Error(),
+		}, nil
+	}
+
+	return getMobileOneClickTokenByMobile(application, MobileOneClickH5GrantType, mobile, scope, host, clientIp, lang)
+}
+
+func getMobileOneClickTokenByMobile(application *Application, grantType string, mobile string, scope string, host string, clientIp string, lang string) (*Token, *TokenError, error) {
 	dest, ok := util.GetE164Number(mobile, "CN")
 	if !ok {
 		return nil, &TokenError{
@@ -117,7 +167,7 @@ func GetMobileOneClickToken(application *Application, code string, scope string,
 	}
 
 	if user == nil {
-		if !application.isAddressGrantSignupEnabled(MobileOneClickGrantType, VerifyTypePhone) {
+		if !application.isAddressGrantSignupEnabled(grantType, VerifyTypePhone) {
 			return nil, &TokenError{
 				Error:            InvalidGrant,
 				ErrorDescription: "the user does not exist, and the application does not allow mobile one-click login to sign up new account: enable signup and require no signup item that the phone number can't fill in",

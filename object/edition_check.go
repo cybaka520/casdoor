@@ -56,7 +56,8 @@ func CheckApplicationEdition(application *Application) error {
 	if application.InactiveTimeoutMinutes > 0 {
 		return edition.Require(edition.Commercial, edition.FeatureInactiveTimeout)
 	}
-	if util.InSlice(application.GrantTypes, MobileOneClickGrantType) {
+	if util.InSlice(application.GrantTypes, MobileOneClickGrantType) ||
+		util.InSlice(application.GrantTypes, MobileOneClickH5GrantType) {
 		return edition.Require(edition.Commercial, edition.FeatureMobileOneClick)
 	}
 	return nil

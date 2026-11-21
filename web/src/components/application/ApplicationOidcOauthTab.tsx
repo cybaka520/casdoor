@@ -25,6 +25,7 @@ const GRANT_TYPES = [
   {value: "urn:ietf:params:oauth:grant-type:token-exchange", label: "Token Exchange"},
   {value: "urn:casdoor:params:oauth:grant-type:verification-code", label: "Verification Code"},
   {value: "urn:casdoor:params:oauth:grant-type:mobile-one-click", label: "Mobile One-Click"},
+  {value: "urn:casdoor:params:oauth:grant-type:mobile-one-click-h5", label: "Mobile One-Click (H5)"},
 ];
 const TOKEN_FORMATS = ["JWT", "JWT-Empty", "JWT-Custom", "JWT-Standard"];
 const TOKEN_SIGNING_METHODS = ["RS256", "RS512", "ES256", "ES512", "ES384", "SM2"];
@@ -98,7 +99,11 @@ export function ApplicationOidcOauthTab({application, updateField}: ApplicationT
           onChange={(v) => updateField("grantTypes", v)}
           options={GRANT_TYPES}
         />
-        {(application.grantTypes ?? []).includes("urn:casdoor:params:oauth:grant-type:mobile-one-click") ? <EditionNotice /> : null}
+        {(application.grantTypes ?? []).some(
+          (g) =>
+            g === "urn:casdoor:params:oauth:grant-type:mobile-one-click" ||
+            g === "urn:casdoor:params:oauth:grant-type:mobile-one-click-h5"
+        ) ? <EditionNotice /> : null}
       </FormRow>
       {/* scopes are ScopeItem objects (name / displayName / description), the
           same three columns antd's ScopeTable edits */}

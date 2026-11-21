@@ -1,0 +1,47 @@
+name: Docker
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # The image build stamps the version by walking the git history.
+          fetch-depth: 0
+
+      - name: Set up buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: STANDARD
+          platforms: linux/amd64
+          outputs: type=docker,dest=casdoor-image.tar
+          tags: casdoor:ci-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Compress image
+        run: gzip -1 casdoor-image.tar
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: casdoor-image-${{ github.sha }}
+          path: casdoor-image.tar.gz
+          retention-days: 7
+          compression-level: 0

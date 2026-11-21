@@ -110,3 +110,28 @@ func (c *PnvsSmsClient) GetMobile(accessToken string) (string, error) {
 
 	return response.GetMobileResultDTO.Mobile, nil
 }
+
+// GetPhoneWithToken exchanges the token that the PNVS H5 SDK got in the browser for its number
+func (c *PnvsSmsClient) GetPhoneWithToken(spToken string) (string, error) {
+	request := dypnsapi.CreateGetPhoneWithTokenRequest()
+	request.Scheme = "https"
+	request.SpToken = spToken
+
+	response, err := c.core.GetPhoneWithToken(request)
+	if err != nil {
+		return "", err
+	}
+
+	if response.Code != "OK" {
+		if response.Message != "" {
+			return "", fmt.Errorf("PNVS GetPhoneWithToken failed with code: %s, %s", response.Code, response.Message)
+		}
+		return "", fmt.Errorf("PNVS GetPhoneWithToken failed with code: %s", response.Code)
+	}
+
+	if response.Data.Mobile == "" {
+		return "", fmt.Errorf("PNVS GetPhoneWithToken returned no mobile")
+	}
+
+	return response.Data.Mobile, nil
+}

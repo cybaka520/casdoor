@@ -26,6 +26,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// MobileOneClickH5GrantType lets a web page sign a user in with the token that the carrier
+// one-click login H5 SDK of Alibaba Cloud PNVS got in the browser
+const MobileOneClickH5GrantType = "urn:casdoor:params:oauth:grant-type:mobile-one-click-h5"
+
 func GetOAuthToken(grantType string, clientId string, clientSecret string, code string, verifier string, scope string, nonce string, username string, password string, countryCode string, host string, refreshToken string, tag string, avatar string, phoneCode string, phoneRequired bool, lang string, subjectToken string, subjectTokenType string, actorToken string, actorTokenType string, requestedTokenType string, assertion string, clientAssertion string, clientAssertionType string, audience string, resource string, dpopProof string, clientIp string) (interface{}, error) {
 	var (
 		application *Application
@@ -109,6 +113,11 @@ func GetOAuthToken(grantType string, clientId string, clientSecret string, code 
 		tokenError = getEditionTokenError(edition.Commercial, edition.FeatureMobileOneClick)
 		if tokenError == nil {
 			token, tokenError, err = GetMobileOneClickToken(application, code, scope, host, clientIp, lang)
+		}
+	case MobileOneClickH5GrantType:
+		tokenError = getEditionTokenError(edition.Commercial, edition.FeatureMobileOneClick)
+		if tokenError == nil {
+			token, tokenError, err = GetMobileOneClickH5Token(application, code, scope, host, clientIp, lang)
 		}
 	case "token", "id_token": // Implicit Grant
 		token, tokenError, err = GetImplicitToken(application, username, password, scope, nonce, host, clientIp, lang)
