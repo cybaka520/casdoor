@@ -126,14 +126,14 @@ func CheckSigninRisk(user *object.User, clientIp string, deviceId string, userAg
 			existing[trace.Kind+"/"+trace.TraceKey] = trace
 		}
 
-		alerts := []string{}
-		check := func(enabled bool, kind string, key string, message string) {
+		rows := []signinAlertRow{}
+		check := func(enabled bool, kind string, key string, row signinAlertRow) {
 			if !enabled || key == "" {
 				return
 			}
 			trace := existing[kind+"/"+key]
 			if trace == nil && hasKind[kind] {
-				alerts = append(alerts, message)
+				rows = append(rows, row)
 			}
 			if err := upsertSigninTrace(user, kind, key, clientIp, userAgent, trace); err != nil {
 				logs.Warn("the sign-in trace of the user: %s is not saved: %s", user.GetId(), err.Error())
@@ -141,10 +141,10 @@ func CheckSigninRisk(user *object.User, clientIp string, deviceId string, userAg
 		}
 
 		location := getIpLocation(clientIp)
-		check(policy.AlertOnNewLocation, "location", location, fmt.Sprintf("New location: %s (IP address %s)", location, clientIp))
-		check(policy.AlertOnNewDevice, "device", object.TruncateString(deviceId, 200), fmt.Sprintf("New device: %s", userAgent))
+		check(policy.AlertOnNewLocation, "location", location, signinAlertRow{Label: "地点", Value: location})
+		check(policy.AlertOnNewDevice, "device", object.TruncateString(deviceId, 200), signinAlertRow{Label: "设备", Value: object.TruncateString(userAgent, 200)})
 
-		if len(alerts) == 0 || user.Email == "" {
+		if len(rows) == 0 || user.Email == "" {
 			return
 		}
 
@@ -152,9 +152,17 @@ func CheckSigninRisk(user *object.User, clientIp string, deviceId string, userAg
 		if err != nil || organization == nil {
 			return
 		}
-		title := fmt.Sprintf("New sign-in to your %s account", organization.DisplayName)
-		content := fmt.Sprintf("Your account %s signed in at %s.\n\n%s\n\nIf this wasn't you, change your password right away and contact your administrator.",
-			user.Name, time.Now().Format("2006-01-02 15:04:05 MST"), strings.Join(alerts, "\n"))
+
+		now := time.Now()
+		// 把定位信息放在最前面，设备/地点差异放在后面
+		rows = append([]signinAlertRow{
+			{Label: "账号", Value: user.Name},
+			{Label: "IP", Value: clientIp},
+			{Label: "时间", Value: now.Format("2006-01-02 15:04:05")},
+		}, rows...)
+
+		title := fmt.Sprintf("检测到你的 %s 账号有新登录", organization.DisplayName)
+		content := buildSigninRiskEmail(user.DisplayName, user.Name, now, rows)
 		err = sendOrganizationEmail(organization, title, content, []string{user.Email})
 		if err != nil {
 			logs.Warn("the sign-in alert to the user: %s is not sent: %s", user.GetId(), err.Error())

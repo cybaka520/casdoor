@@ -103,7 +103,7 @@ func GetMobileOneClickToken(application *Application, code string, scope string,
 		}, nil
 	}
 
-	return getMobileOneClickTokenByMobile(application, MobileOneClickGrantType, mobile, scope, host, clientIp, lang)
+	return getMobileOneClickTokenByMobile(application, mobile, scope, host, clientIp, lang, application.isAddressGrantSignupEnabled(MobileOneClickGrantType, VerifyTypePhone))
 }
 
 // GetMobileOneClickH5Token handles the mobile one-click grant of the PNVS H5 SDK: "spToken"
@@ -149,10 +149,11 @@ func GetMobileOneClickH5Token(application *Application, spToken string, scope st
 		}, nil
 	}
 
-	return getMobileOneClickTokenByMobile(application, MobileOneClickH5GrantType, mobile, scope, host, clientIp, lang)
+	// AMLL Hub 的产品决策：网页一键登录不自动建号，未注册手机号一律拒绝。
+	return getMobileOneClickTokenByMobile(application, mobile, scope, host, clientIp, lang, false)
 }
 
-func getMobileOneClickTokenByMobile(application *Application, grantType string, mobile string, scope string, host string, clientIp string, lang string) (*Token, *TokenError, error) {
+func getMobileOneClickTokenByMobile(application *Application, mobile string, scope string, host string, clientIp string, lang string, allowSignup bool) (*Token, *TokenError, error) {
 	dest, ok := util.GetE164Number(mobile, "CN")
 	if !ok {
 		return nil, &TokenError{
@@ -167,10 +168,10 @@ func getMobileOneClickTokenByMobile(application *Application, grantType string, 
 	}
 
 	if user == nil {
-		if !application.isAddressGrantSignupEnabled(grantType, VerifyTypePhone) {
+		if !allowSignup {
 			return nil, &TokenError{
 				Error:            InvalidGrant,
-				ErrorDescription: "the user does not exist, and the application does not allow mobile one-click login to sign up new account: enable signup and require no signup item that the phone number can't fill in",
+				ErrorDescription: "the user does not exist, and mobile one-click login is not allowed to sign up new account",
 			}, nil
 		}
 
