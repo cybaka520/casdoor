@@ -62,7 +62,16 @@ func getIpLocation(clientIp string) string {
 
 	if ipDbLoaded && parsed.To4() != nil {
 		if info, err := ip.Find(clientIp); err == nil && info.Country != "" {
-			return strings.Trim(strings.Join([]string{info.Country, info.Region, info.City}, " "), " ")
+			// ipdb / 17mon 对缺失字段返回 N/A，直接拼接会让邮件出现 "N/A N/A 杭州"
+			parts := make([]string, 0, 3)
+			for _, field := range []string{info.Country, info.Region, info.City} {
+				if field != "" && field != ip.Null {
+					parts = append(parts, field)
+				}
+			}
+			if len(parts) > 0 {
+				return strings.Join(parts, " ")
+			}
 		}
 	}
 

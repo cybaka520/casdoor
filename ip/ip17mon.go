@@ -27,20 +27,35 @@ const Null = "N/A"
 var (
 	ErrInvalidIp = errors.New("invalid ip format")
 	std          *Locator
+	stdIPDB      *IPDBLocator
 )
 
-// Init default locator with dataFile
+// Init default locator with dataFile, supporting both 17mon .dat and ipip.net .ipdb
 func Init(dataFile string) (err error) {
-	if std != nil {
+	if std != nil || stdIPDB != nil {
 		return
 	}
-	std, err = NewLocator(dataFile)
+	data, err := ioutil.ReadFile(dataFile)
+	if err != nil {
+		return
+	}
+	if isIPDB(data) {
+		stdIPDB, err = NewIPDBLocator(data)
+		return
+	}
+	std = NewLocatorWithData(data)
 	return
 }
 
 // Init default locator with data
 func InitWithData(data []byte) {
-	if std != nil {
+	if std != nil || stdIPDB != nil {
+		return
+	}
+	if isIPDB(data) {
+		if loc, err := NewIPDBLocator(data); err == nil {
+			stdIPDB = loc
+		}
 		return
 	}
 	std = NewLocatorWithData(data)
@@ -50,11 +65,17 @@ func InitWithData(data []byte) {
 // Find locationInfo by ip string
 // It will return err when ipstr is not a valid format
 func Find(ipstr string) (*LocationInfo, error) {
+	if stdIPDB != nil {
+		return stdIPDB.Find(ipstr)
+	}
 	return std.Find(ipstr)
 }
 
 // Find locationInfo by uint32
 func FindByUint(ip uint32) *LocationInfo {
+	if stdIPDB != nil {
+		return stdIPDB.FindByUint(ip)
+	}
 	return std.FindByUint(ip)
 }
 
