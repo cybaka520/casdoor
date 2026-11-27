@@ -198,7 +198,7 @@ export function ApplicationOidcOauthTab({application, updateField}: ApplicationT
         {(application.grantTypes ?? []).some(
           (g) =>
             g === "urn:casdoor:params:oauth:grant-type:mobile-one-click" ||
-            g === "urn:casdoor:params:oauth:grant-type:mobile-one-click-h5"
+            g === "urn:casdoor:params:oauth:grant-type:mobile-one-click-h5",
         ) ? <EditionNotice /> : null}
       </FormRow>
       {/* scopes are ScopeItem objects (name / displayName / description), the
